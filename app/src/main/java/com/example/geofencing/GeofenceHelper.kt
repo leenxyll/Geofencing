@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.util.Log
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
@@ -12,7 +13,7 @@ import com.google.android.gms.maps.model.LatLng
 
 class GeofenceHelper(base: Context?) : ContextWrapper(base) {
 
-    private lateinit var pendingIntent: PendingIntent
+    private var pendingIntent: PendingIntent? = null
 
     public fun getGeofencingRequest(geofence: Geofence): GeofencingRequest {
         return GeofencingRequest.Builder()
@@ -31,14 +32,24 @@ class GeofenceHelper(base: Context?) : ContextWrapper(base) {
             .build()
     }
 
-    public fun getPendingIntent(): PendingIntent {
+    fun getPendingIntent(): PendingIntent {
         if (pendingIntent != null) {
-            return pendingIntent
+            Log.d("MapsActivity", "pendingIntent != null : " + pendingIntent.toString())
+            return pendingIntent!!
         }
         val intent: Intent = Intent(this, GeofenceBroadcastReceiver::class.java)
-        pendingIntent = PendingIntent.getBroadcast(this, 2607, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        pendingIntent = PendingIntent.getBroadcast(this, 2607, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        return pendingIntent
+        Log.d("MapsActivity", "setting pendingIntent : " + pendingIntent.toString())
+        return pendingIntent!!
+//        // ตรวจสอบว่า pendingIntent เป็น null หรือไม่
+//        if (pendingIntent == null) {
+//            // ถ้าเป็น null ให้สร้างใหม่
+//            val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
+//            pendingIntent = PendingIntent.getBroadcast(this, 2607, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+//        }
+//        // คืนค่ากลับเป็น pendingIntent โดยไม่ต้องใช้ smart cast
+//        return pendingIntent!!
     }
 
     fun getErrorString(e: Exception): String {

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -35,7 +36,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
     private val GEOFENCE_RADIUS: Float = 200.0F
     private var GEOFENCE_ID: String = "SOME_GEOFENCE_ID"
 
-    private val FINE_LOCATION_ACCESS_REQUEST_CODE: Int = 10001
+//    private val FINE_LOCATION_ACCESS_REQUEST_CODE: Int = 10001
+private val LOCATION_ACCESS_REQUEST_CODE: Int = 10001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,15 +82,38 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
 
     // Request Location From User
     private fun enableUserLocation() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//            mMap.setMyLocationEnabled(true)
+//        } else {
+//            // Ask for permission
+//            if  (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+//                // We need to show user a dialog for displaying why the permission is needed and then ask for the permission...
+//                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), FINE_LOCATION_ACCESS_REQUEST_CODE)
+//            } else {
+//                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), FINE_LOCATION_ACCESS_REQUEST_CODE)
+//            }
+//        }
+        val fineLocationPermisson = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        val backgroundLocationPermission = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        )
+
+        if (fineLocationPermisson == PackageManager.PERMISSION_GRANTED &&
+            backgroundLocationPermission == PackageManager.PERMISSION_GRANTED){
             mMap.setMyLocationEnabled(true)
         } else {
-            // Ask for permission
-            if  (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // We need to show user a dialog for displaying why the permission is needed and then ask for the permission...
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), FINE_LOCATION_ACCESS_REQUEST_CODE)
-            } else {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), FINE_LOCATION_ACCESS_REQUEST_CODE)
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION),
+                    LOCATION_ACCESS_REQUEST_CODE)
             }
         }
     }
@@ -98,13 +123,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//        if (requestCode == FINE_LOCATION_ACCESS_REQUEST_CODE) {
+//            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                // We have the permission
+//                mMap.setMyLocationEnabled(true)
+//            } else {
+//                // We do not have the permission..
+//            }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == FINE_LOCATION_ACCESS_REQUEST_CODE) {
-            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // We have the permission
+        if (requestCode == LOCATION_ACCESS_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 mMap.setMyLocationEnabled(true)
             } else {
-                // We do not have the permission..
+                // สิทธิ์ถูกปฏิเสธ
+                Toast.makeText(this, "Permissions required for location access", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -114,6 +147,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         mMap.clear()
         addMarker(latLng)
         addCircle(latLng, GEOFENCE_RADIUS)
+        Log.d(Companion.TAG, "addMarker and Circle")
         addGeofence(latLng, GEOFENCE_RADIUS)
     }
 
