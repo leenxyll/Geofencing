@@ -15,32 +15,40 @@ class GeofenceHelper(base: Context?) : ContextWrapper(base) {
 
     private var pendingIntent: PendingIntent? = null
 
-    public fun getGeofencingRequest(geofence: Geofence): GeofencingRequest {
-        return GeofencingRequest.Builder()
+    fun getGeofencingRequest(geofence: Geofence): GeofencingRequest {
+        val geofenceRequest = GeofencingRequest.Builder()
             .addGeofence(geofence)
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
             .build()
+        Log.d(TAG, "Build geofence: " + geofenceRequest.initialTrigger)
+        return geofenceRequest
     }
 
-    public fun getGeofence(ID: String, latLng: LatLng, radius: Float, transitionTypes: Int): Geofence {
-        return Geofence.Builder()
+    fun getGeofence(ID: String, latLng: LatLng, radius: Float, transitionTypes: Int): Geofence {
+        val geofence = Geofence.Builder()
             .setCircularRegion(latLng.latitude,latLng.latitude, radius)
             .setRequestId(ID)
             .setTransitionTypes(transitionTypes)
             .setLoiteringDelay(5000)
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
             .build()
+        Log.d(TAG, "get Geofence " + geofence.requestId)
+        return geofence
     }
 
     fun getPendingIntent(): PendingIntent {
+        val testIntent = Intent(this, GeofenceBroadcastReceiver::class.java)
+        Log.d(TAG, "Test send broadcast")
+        sendBroadcast(testIntent)
+
         if (pendingIntent != null) {
-            Log.d("MapsActivity", "pendingIntent != null : " + pendingIntent.toString())
+            Log.d(TAG, "pendingIntent != null : " + pendingIntent.toString())
             return pendingIntent!!
         }
         val intent: Intent = Intent(this, GeofenceBroadcastReceiver::class.java)
-        pendingIntent = PendingIntent.getBroadcast(this, 2607, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        pendingIntent = PendingIntent.getBroadcast(this, 2607, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
 
-        Log.d("MapsActivity", "setting pendingIntent : " + pendingIntent.toString())
+        Log.d(TAG, "setting pendingIntent : " + pendingIntent.toString())
         return pendingIntent!!
 //        // ตรวจสอบว่า pendingIntent เป็น null หรือไม่
 //        if (pendingIntent == null) {

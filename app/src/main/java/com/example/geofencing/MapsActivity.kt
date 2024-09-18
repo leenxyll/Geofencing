@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -33,11 +34,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
     private lateinit var geofencingClient: GeofencingClient
     private lateinit var geofenceHelper: GeofenceHelper
 
-    private val GEOFENCE_RADIUS: Float = 200.0F
+    private val GEOFENCE_RADIUS: Float = 100.0F
     private var GEOFENCE_ID: String = "SOME_GEOFENCE_ID"
 
 //    private val FINE_LOCATION_ACCESS_REQUEST_CODE: Int = 10001
-private val LOCATION_ACCESS_REQUEST_CODE: Int = 10001
+//    private val BACKGROUND_LOCATION_ACCESS_REQUEST_CODE: Int = 10002
+
+    private val LOCATION_ACCESS_REQUEST_CODE: Int = 10001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +77,7 @@ private val LOCATION_ACCESS_REQUEST_CODE: Int = 10001
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(myHome))
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myHome, 16.0F))
 
+        Log.d(TAG, "Permission Request onMapReady")
         enableUserLocation()
 
         // Geofence
@@ -82,39 +86,32 @@ private val LOCATION_ACCESS_REQUEST_CODE: Int = 10001
 
     // Request Location From User
     private fun enableUserLocation() {
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//            mMap.setMyLocationEnabled(true)
-//        } else {
-//            // Ask for permission
-//            if  (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-//                // We need to show user a dialog for displaying why the permission is needed and then ask for the permission...
-//                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), FINE_LOCATION_ACCESS_REQUEST_CODE)
-//            } else {
-//                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), FINE_LOCATION_ACCESS_REQUEST_CODE)
-//            }
-//        }
-        val fineLocationPermisson = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        val backgroundLocationPermission = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION
-        )
-
-        if (fineLocationPermisson == PackageManager.PERMISSION_GRANTED &&
-            backgroundLocationPermission == PackageManager.PERMISSION_GRANTED){
-            mMap.setMyLocationEnabled(true)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            Log.d(TAG, "Permission Granted")
+            mMap.isMyLocationEnabled = true
         } else {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION),
-                    LOCATION_ACCESS_REQUEST_CODE)
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)){
+//                Log.d(TAG, "Ask for permission in IF")
+//                ActivityCompat.requestPermissions(this,
+//                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+//                    LOCATION_ACCESS_REQUEST_CODE
+//                )
+//            } else {
+//                Log.d(TAG, "Ask for permission in ELSE")
+//                ActivityCompat.requestPermissions(this,
+//                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+//                    LOCATION_ACCESS_REQUEST_CODE
+//                )
+//            }
+            val permissionsToRequest = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                permissionsToRequest.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             }
+
+            Log.d(TAG, permissionsToRequest.toString())
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), LOCATION_ACCESS_REQUEST_CODE)
         }
     }
 
@@ -123,19 +120,14 @@ private val LOCATION_ACCESS_REQUEST_CODE: Int = 10001
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-//        if (requestCode == FINE_LOCATION_ACCESS_REQUEST_CODE) {
-//            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                // We have the permission
-//                mMap.setMyLocationEnabled(true)
-//            } else {
-//                // We do not have the permission..
-//            }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_ACCESS_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                mMap.setMyLocationEnabled(true)
+                // สิทธิ์ทั้งหมดได้รับการอนุมัติแล้ว
+                Log.d(TAG, "We have the permission")
+                mMap.isMyLocationEnabled = true
             } else {
+                Log.d(TAG, "We do not have the permission")
                 // สิทธิ์ถูกปฏิเสธ
                 Toast.makeText(this, "Permissions required for location access", Toast.LENGTH_SHORT).show()
             }
